@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>My Music System</title>
+
+    <style>
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background: black;
+        }
+
+        /* =========================
+           BACKGROUND
+        ========================= */
+
+        .background {
+            position: fixed;
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+
+            z-index: -3;
+        }
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+
+            background: rgba(0, 0, 0, 0.20);
+
+            z-index: -2;
+        }
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .top-bar {
+            position: absolute;
+
+            top: 25px;
+            left: 20px;
+            right: 20px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            color: white;
+
+            z-index: 10;
+        }
+
+        .clock {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .online {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .online-dot {
+            width: 14px;
+            height: 14px;
+
+            background: #00ff7f;
+
+            border-radius: 50%;
+
+            box-shadow: 0 0 10px #00ff7f;
+        }
+
+        .music-links {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .music-link {
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 18px;
+            font-weight: bold;
+
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            cursor: pointer;
+        }
+
+        .music-link:hover {
+            opacity: 0.75;
+        }
+
+        /* =========================
+           CENTER TITLE
+        ========================= */
+
+        .center-title {
+            position: absolute;
+
+            top: 42%;
+            left: 50%;
+
+            transform: translate(-50%, -50%);
+
+            text-align: center;
+
+            color: white;
+
+            z-index: 2;
+
+            width: 100%;
+        }
+
+        .center-title h1 {
+            font-size: clamp(65px, 10vw, 160px);
+
+            line-height: 0.95;
+
+            font-weight: 900;
+
+            text-shadow:
+                4px 4px 10px rgba(0,0,0,0.45);
+        }
+
+        .center-title p {
+            font-size: 22px;
+
+            margin-top: 20px;
+
+            font-weight: bold;
+
+            text-shadow:
+                2px 2px 5px rgba(0,0,0,0.5);
+        }
+
+        /* =========================
+           MUSIC PLAYER
+        ========================= */
+
+        .player {
+
+            position: absolute;
+
+            left: 50%;
+
+            bottom: 35px;
+
+            transform: translateX(-50%);
+
+            width: 820px;
+
+            max-width: 92%;
+
+            height: 150px;
+
+            padding: 14px 25px;
+
+            border-radius: 80px;
+
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(75, 45, 35, 0.95),
+                    rgba(185, 72, 55, 0.94)
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 20px;
+
+            box-shadow:
+                0 15px 35px rgba(0,0,0,0.45);
+
+            border:
+                1px solid rgba(255,255,255,0.25);
+
+            z-index: 10;
+        }
+
+        /* =========================
+           ALBUM
+        ========================= */
+
+        .album {
+
+            width: 120px;
+            height: 120px;
+
+            min-width: 120px;
+
+            border-radius: 50%;
+
+            overflow: hidden;
+
+            border:
+                3px solid rgba(255,255,255,0.85);
+
+            box-shadow:
+                0 5px 15px rgba(0,0,0,0.45);
+
+            animation:
+                rotate 8s linear infinite;
+
+            animation-play-state: paused;
+        }
+
+        .album.playing {
+            animation-play-state: running;
+        }
+
+        .album img {
+
+            width: 100%;
+            height: 100%;
+
+            object-fit: cover;
+        }
+
+        @keyframes rotate {
+
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+
+        }
+
+        /* =========================
+           SONG DETAILS
+        ========================= */
+
+        .song-details {
+
+            flex: 1;
+
+            min-width: 0;
+        }
+
+        .song-name {
+
+            color: white;
+
+            font-size: 22px;
+
+            font-weight: bold;
+
+            white-space: nowrap;
+
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            margin-bottom: 7px;
+        }
+
+        .artist {
+
+            color: rgba(255,255,255,0.75);
+
+            font-size: 16px;
+
+            margin-bottom: 14px;
+        }
+
+        /* =========================
+           PROGRESS
+        ========================= */
+
+        .progress-row {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+        }
+
+        .time {
+
+            font-size: 13px;
+
+            color: rgba(255,255,255,0.85);
+
+            min-width: 35px;
+        }
+
+        .progress {
+
+            flex: 1;
+
+            height: 5px;
+
+            appearance: none;
+
+            border-radius: 10px;
+
+            background:
+                rgba(255,255,255,0.35);
+
+            cursor: pointer;
+        }
+
+        .progress::-webkit-slider-thumb {
+
+            appearance: none;
+
+            width: 9px;
+            height: 9px;
+
+            background: white;
+
+            border-radius: 50%;
+        }
+
+        /* =========================
+           CONTROLS
+        ========================= */
+
+        .controls {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 22px;
+
+            padding-right: 8px;
+        }
+
+        .control {
+
+            border: none;
+
+            background: transparent;
+
+            color: white;
+
+            font-size: 23px;
+
+            cursor: pointer;
+        }
+
+        .control:hover {
+            transform: scale(1.12);
+        }
+
+        .play {
+
+            width: 64px;
+            height: 64px;
+
+            border-radius: 50%;
+
+            border: none;
+
+            background: white;
+
+            color: black;
+
+            font-size: 27px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+        .play:hover {
+            transform: scale(1.07);
+        }
+
+        /* REAL AUDIO */
+
+        audio {
+            display: none;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 700px) {
+
+            body {
+                overflow: hidden;
+            }
+
+            .top-bar {
+                top: 15px;
+            }
+
+            .online {
+                display: none;
+            }
+
+            .music-links {
+                gap: 10px;
+            }
+
+            .music-link {
+                font-size: 14px;
+            }
+
+            .center-title {
+                top: 38%;
+            }
+
+            .center-title h1 {
+                font-size: 55px;
+            }
+
+            .center-title p {
+                font-size: 15px;
+            }
+
+            .player {
+
+                bottom: 20px;
+
+                width: 94%;
+
+                height: auto;
+
+                min-height: 130px;
+
+                border-radius: 30px;
+
+                padding: 15px;
+
+                gap: 12px;
+            }
+
+            .album {
+
+                width: 75px;
+                height: 75px;
+
+                min-width: 75px;
+            }
+
+            .song-name {
+                font-size: 16px;
+            }
+
+            .artist {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+
+            .controls {
+                gap: 7px;
+            }
+
+            .control {
+                font-size: 17px;
+            }
+
+            .play {
+                width: 50px;
+                height: 50px;
+                font-size: 21px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- YOUR UPLOADED PHOTO -->
+
+    <img
+        src="photo/WhatsApp Image 2026-08-11 at 10.45.34 PM.jpeg"
+        class="background"
+        alt="Background"
+    >
+
+    <div class="overlay"></div>
+
+
+    <!-- TOP BAR -->
+
+    <div class="top-bar">
+
+        <div
+            class="clock"
+            id="clock">
+
+            10:37 pm
+
+        </div>
+
+
+        <div class="online">
+
+            <span class="online-dot"></span>
+
+            <span>
+                37 online
+            </span>
+
+        </div>
+
+
+        <div class="music-links">
+
+            <a
+                href="https://open.spotify.com/"
+                target="_blank"
+                class="music-link">
+
+                <span>●</span>
+
+                Spotify
+
+                <span>↗</span>
+
+            </a>
+
+
+            <a
+                href="https://music.youtube.com/"
+                target="_blank"
+                class="music-link">
+
+                <span>▶</span>
+
+                YT Music
+
+                <span>↗</span>
+
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <!-- CENTER -->
+
+    <div class="center-title">
+
+        <h1>
+            सुनो<br>
+            संगीत
+        </h1>
+
+    </div>
+
+
+    <!-- MUSIC PLAYER -->
+
+    <div class="player">
+
+
+        <!-- ALBUM -->
+
+        <div
+            class="album"
+            id="album">
+
+            <img
+                id="albumImage"
+                src="song1.jpg"
+                alt="Song">
+
+        </div>
+
+
+        <!-- SONG DETAILS -->
+
+        <div class="song-details">
+
+            <div
+                class="song-name"
+                id="songName">
+
+                Mujhse Mohabbat Ka Izhaar Karta
+
+            </div>
+
+
+            <div
+                class="artist"
+                id="artistName">
+
+                Satrang Music Official
+
+            </div>
+
+
+            <div class="progress-row">
+
+                <span
+                    class="time"
+                    id="currentTime">
+                    0:00
+
+                </span>
+
+
+                <input
+                    type="range"
+                    class="progress"
+                    id="progress"
+                    min="0"
+                    max="100"
+                    value="0">
+
+
+                <span
+                    class="time"
+                    id="duration">
+
+                    0:00
+
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTROLS -->
+
+        <div class="controls">
+
+            <button
+                class="control"
+                id="previousBtn">
+
+                |◀
+
+            </button>
+
+
+            <button
+                class="play"
+                id="playBtn">
+
+                ▶
+
+            </button>
+
+
+            <button
+                class="control"
+                id="nextBtn">
+
+                ▶|
+
+            </button>
+
+        </div>
+
+
+        <!-- AUDIO PLAYER -->
+
+        <audio
+            id="audioPlayer">
+        </audio>
+
+
+    </div>
+
+
+    <script>
+
+        /* =========================
+           SONG LIST
+        ========================= */
+
+       const songs = [
+
+    {
+        name: "Agar HO Tum Toh",
+        artist: "Jubin Nautiyal",
+        audio: "song/Agar Ho Tum - Lyric VideoMr. Mrs. MahiRajkummar, Janhvi Tanishk,Jubin.mp3",
+        image: "photo/photo1.webp",
+    },
+
+    {
+        name: "Teri Barishe lyrics",
+        artist: "arijit singh teri barishe lyrics",
+        audio: "song/Arijit Singh ISHQ MUBARAK Full Song WIth Lyrics Tum Bin 2.mp3",
+        image: "photo/photo2.jfif"
+    },
+
+    {
+        name: "Chand Tare Phool Shabnam",
+        artist: "Tauseef Akhtar",
+        audio: "song/Chand Tare Phool - 4K Video Tum Se Achcha Kaun Hai Nakul Kapoor 90s Romantic Songs.mp3",
+        image: "photo/photo3.jfif",
+    },
+
+    {
+        name: "Song 4",
+        artist: "My Music",
+        audio: "songs/Song4.mp3",
+        image: "song4.jpg"
+    },
+
+    {
+        name: "Song 5",
+        artist: "My Music",
+        audio: "songs/Song5.mp3",
+        image: "song5.jpg"
+    }
+
+];
+
+        let currentSong = 0;
+
+
+        const audio =
+            document.getElementById(
+                "audioPlayer"
+            );
+
+        const playBtn =
+            document.getElementById(
+                "playBtn"
+            );
+
+        const previousBtn =
+            document.getElementById(
+                "previousBtn"
+            );
+
+        const nextBtn =
+            document.getElementById(
+                "nextBtn"
+            );
+
+        const progress =
+            document.getElementById(
+                "progress"
+            );
+
+        const currentTime =
+            document.getElementById(
+                "currentTime"
+            );
+
+        const duration =
+            document.getElementById(
+                "duration"
+            );
+
+        const songName =
+            document.getElementById(
+                "songName"
+            );
+
+        const artistName =
+            document.getElementById(
+                "artistName"
+            );
+
+        const albumImage =
+            document.getElementById(
+                "albumImage"
+            );
+
+        const album =
+            document.getElementById(
+                "album"
+            );
+
+
+        /* LOAD SONG */
+
+        function loadSong(index) {
+
+            currentSong = index;
+
+            audio.src =
+                songs[index].audio;
+
+            songName.innerText =
+                songs[index].name;
+
+            artistName.innerText =
+                songs[index].artist;
+
+            albumImage.src =
+                songs[index].image;
+
+            progress.value = 0;
+
+            currentTime.innerText =
+                "0:00";
+
+            duration.innerText =
+                "0:00";
+        }
+
+
+        /* PLAY / PAUSE */
+
+        playBtn.addEventListener(
+            "click",
+            function () {
+
+                if (audio.paused) {
+
+                    audio.play();
+
+                } else {
+
+                    audio.pause();
+
+                }
+
+            }
+        );
+
+
+        /* PLAY */
+
+        audio.addEventListener(
+            "play",
+            function () {
+
+                playBtn.innerText =
+                    "❚❚";
+
+                album.classList.add(
+                    "playing"
+                );
+
+            }
+        );
+
+
+        /* PAUSE */
+
+        audio.addEventListener(
+            "pause",
+            function () {
+
+                playBtn.innerText =
+                    "▶";
+
+                album.classList.remove(
+                    "playing"
+                );
+
+            }
+        );
+
+
+        /* PREVIOUS */
+
+        previousBtn.addEventListener(
+            "click",
+            function () {
+
+                currentSong--;
+
+                if (currentSong < 0) {
+
+                    currentSong =
+                        songs.length - 1;
+
+                }
+
+                loadSong(currentSong);
+
+                audio.play();
+
+            }
+        );
+
+
+        /* NEXT */
+
+        nextBtn.addEventListener(
+            "click",
+            function () {
+
+                currentSong++;
+
+                if (
+                    currentSong >=
+                    songs.length
+                ) {
+
+                    currentSong = 0;
+
+                }
+
+                loadSong(currentSong);
+
+                audio.play();
+
+            }
+        );
+
+
+        /* DURATION */
+
+        audio.addEventListener(
+            "loadedmetadata",
+            function () {
+
+                duration.innerText =
+                    formatTime(
+                        audio.duration
+                    );
+
+            }
+        );
+
+
+        /* PROGRESS */
+
+        audio.addEventListener(
+            "timeupdate",
+            function () {
+
+                if (audio.duration) {
+
+                    progress.value =
+                        (
+                            audio.currentTime /
+                            audio.duration
+                        ) * 100;
+
+                }
+
+                currentTime.innerText =
+                    formatTime(
+                        audio.currentTime
+                    );
+
+            }
+        );
+
+
+        /* SEEK */
+
+        progress.addEventListener(
+            "input",
+            function () {
+
+                if (audio.duration) {
+
+                    audio.currentTime =
+                        (
+                            progress.value /
+                            100
+                        ) *
+                        audio.duration;
+
+                }
+
+            }
+        );
+
+
+        /* AUTO NEXT */
+
+        audio.addEventListener(
+            "ended",
+            function () {
+
+                currentSong++;
+
+                if (
+                    currentSong >=
+                    songs.length
+                ) {
+
+                    currentSong = 0;
+
+                }
+
+                loadSong(currentSong);
+
+                audio.play();
+
+            }
+        );
+
+
+        /* FORMAT TIME */
+
+        function formatTime(time) {
+
+            if (isNaN(time)) {
+
+                return "0:00";
+
+            }
+
+            let minutes =
+                Math.floor(time / 60);
+
+            let seconds =
+                Math.floor(time % 60);
+
+            if (seconds < 10) {
+
+                seconds =
+                    "0" + seconds;
+
+            }
+
+            return minutes +
+                ":" +
+                seconds;
+        }
+
+
+        /* LIVE CLOCK */
+
+        function updateClock() {
+
+            const now =
+                new Date();
+
+            let hours =
+                now.getHours();
+
+            let minutes =
+                now.getMinutes();
+
+            let ampm =
+                hours >= 12
+                    ? "pm"
+                    : "am";
+
+            hours =
+                hours % 12 || 12;
+
+            if (minutes < 10) {
+
+                minutes =
+                    "0" + minutes;
+
+            }
+
+            document.getElementById(
+                "clock"
+            ).innerText =
+                hours +
+                ":" +
+                minutes +
+                " " +
+                ampm;
+        }
+
+
+        setInterval(
+            updateClock,
+            1000
+        );
+
+        updateClock();
+
+
+        /* FIRST SONG */
+
+        loadSong(0);
+
+    </script>
+
+
+</body>
+
+</html>
